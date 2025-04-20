@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ovládanie robotického auta</title>
+  <style>
+    body { background:#f5f7fa; font-family:sans-serif;
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; height:100vh; margin:0;
+    }
+    h1 { color:#2c3e50; margin-bottom:1rem; }
+    .grid {
+      display:grid;
+      grid-template:repeat(3,100px)/repeat(3,100px);
+      gap:1rem;
+    }
+    button {
+      font-size:1.5rem; border:none; background:#3498db;
+      color:#fff; border-radius:.5rem; cursor:pointer;
+      user-select:none;
+    }
+    button:active { background:#1c598a; }
+    .invisible { visibility:hidden; }
+  </style>
+</head>
+<body>
+  <h1>Ovládaj robotické auto</h1>
+  <div class="grid">
+    <div class="invisible"></div>
+    <button id="btn-FORWARD">↑</button>
+    <div class="invisible"></div>
+    <button id="btn-LEFT">←</button>
+    <button id="btn-STOP">■</button>
+    <button id="btn-RIGHT">→</button>
+    <div class="invisible"></div>
+    <button id="btn-BACKWARD">↓</button>
+    <div class="invisible"></div>
+  </div>
+
+  <!-- Socket.IO klient z CDN (4.x) -->
+  <script src="https://cdn.socket.io/4.7.1/socket.io.min.js"></script>
+  <script>
+    const socket = io({ transports: ['websocket'] });
+    socket.on('connect', () => console.log('Socket.IO connected, id=', socket.id));
+    socket.on('disconnect', () => console.log('Socket.IO disconnected'));
+
+    function sendCmd(dir) {
+      // Swap LEFT and RIGHT before emitting
+      let actual = dir;
+      if (dir === 'LEFT')  actual = 'RIGHT';
+      if (dir === 'RIGHT') actual = 'LEFT';
+      socket.emit('command', { direction: actual });
+    }
+
+    ['FORWARD','BACKWARD','LEFT','RIGHT'].forEach(dir => {
+      const btn = document.getElementById(`btn-${dir}`);
+      btn.addEventListener('mousedown',  () => sendCmd(dir));
+      btn.addEventListener('mouseup',    () => sendCmd('STOP'));
+      btn.addEventListener('touchstart', e => { e.preventDefault(); sendCmd(dir); });
+      btn.addEventListener('touchend',   e => { e.preventDefault(); sendCmd('STOP'); });
+    });
+
+    document.getElementById('btn-STOP')
+            .addEventListener('mousedown', () => sendCmd('STOP'));
+  </script>
+</body>
+</html>
