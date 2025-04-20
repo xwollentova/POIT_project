@@ -18,31 +18,65 @@ void loop() {
   if (Serial.available()) {
     char cmd = Serial.read();
 
-    if (cmd == 'F') {
-      motor_1.run(FORWARD);
-      motor_2.run(FORWARD);
-      motor_3.run(FORWARD);
-      motor_4.run(FORWARD);
-    } else if (cmd == 'B') {
-      motor_1.run(BACKWARD);
-      motor_2.run(BACKWARD);
-      motor_3.run(BACKWARD);
-      motor_4.run(BACKWARD);
-    } else if (cmd == 'L') {
-      motor_1.run(FORWARD);
-      motor_4.run(FORWARD);
-      motor_2.run(RELEASE);
-      motor_3.run(RELEASE);
-    } else if (cmd == 'R') {
-      motor_2.run(FORWARD);
-      motor_3.run(FORWARD);
-      motor_1.run(RELEASE);
-      motor_4.run(RELEASE);
-    } else if (cmd == 'S') {
-      motor_1.run(RELEASE);
-      motor_2.run(RELEASE);
-      motor_3.run(RELEASE);
-      motor_4.run(RELEASE);
+    // ignoruj CR/LF
+    if (cmd == '\n' || cmd == '\r') return;
+
+    // premeni malé písmená na veľké
+    cmd = toupper(cmd);
+
+    // DEBUG: pozri presne, čo prišlo
+    Serial.print("Got cmd: ");
+    Serial.println(cmd);
+
+    switch (cmd) {
+      case 'F':  // vpred
+        motor_1.run(FORWARD);
+        motor_2.run(FORWARD);
+        motor_3.run(FORWARD);
+        motor_4.run(FORWARD);
+        break;
+
+      case 'B':  // vzad
+        motor_1.run(BACKWARD);
+        motor_2.run(BACKWARD);
+        motor_3.run(BACKWARD);
+        motor_4.run(BACKWARD);
+        break;
+
+      case 'L':  // vľavo
+        motor_1.run(FORWARD);
+        motor_4.run(FORWARD);
+        motor_2.run(RELEASE);
+        motor_3.run(RELEASE);
+        break;
+
+      case 'R':  // vpravo
+        motor_2.run(FORWARD);
+        motor_3.run(FORWARD);
+        motor_1.run(RELEASE);
+        motor_4.run(RELEASE);
+        break;
+
+      case 'S':  // STOP motory
+        motor_1.run(RELEASE);
+        motor_2.run(RELEASE);
+        motor_3.run(RELEASE);
+        motor_4.run(RELEASE);
+        break;
+
+      case 'M':  // meranie START – iba debug, motory sa nespustia ani nezastavia
+        Serial.println("Received MEASURE_START (ignored by Arduino)");
+        break;
+
+      case 'X':  // meranie STOP – iba debug
+        Serial.println("Received MEASURE_STOP (ignored by Arduino)");
+        break;
+
+      default:   // čokoľvek iné (napr. nezrozumiteľné znaky)
+        Serial.print("Unknown cmd, ignoring: ");
+        Serial.println(cmd);
+        break;
     }
   }
 }
+
