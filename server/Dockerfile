@@ -1,13 +1,12 @@
-# Dockerfile
-
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
-
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-EXPOSE 5000
+# Inštalácia systémových knižníc a Python balíčkov
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libmariadb-dev \
+    && pip install --no-cache-dir -r requirements.txt
 
 CMD ["python", "app.py"]
