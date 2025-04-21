@@ -1,6 +1,6 @@
 #include <AFMotor.h>
-#include<Arduino.h>
 
+// Inicializácia čtyroch DC motorov na pozíciach 1–4
 AF_DCMotor motor_1(1);
 AF_DCMotor motor_2(2);
 AF_DCMotor motor_3(3);
@@ -8,23 +8,23 @@ AF_DCMotor motor_4(4);
 
 void setup() {
   Serial.begin(9600);
+
+  // Nastav maximálnu rýchlosť všetkých motorov
   motor_1.setSpeed(255);
   motor_2.setSpeed(255);
   motor_3.setSpeed(255);
   motor_4.setSpeed(255);
+  
+  // Stopni všetky motory po štarte
+  motor_1.run(RELEASE);
+  motor_2.run(RELEASE);
+  motor_3.run(RELEASE);
+  motor_4.run(RELEASE);
 }
 
 void loop() {
   if (Serial.available()) {
-    char cmd = Serial.read();
-
-    // ignoruj CR/LF
-    if (cmd == '\n' || cmd == '\r') return;
-
-    // premeni malé písmená na veľké
-    cmd = toupper(cmd);
-
-    // DEBUG: pozri presne, čo prišlo
+    char cmd = toupper(Serial.read());
     Serial.print("Got cmd: ");
     Serial.println(cmd);
 
@@ -43,40 +43,35 @@ void loop() {
         motor_4.run(BACKWARD);
         break;
 
-      case 'L':  // vľavo
-        motor_1.run(FORWARD);
-        motor_4.run(FORWARD);
-        motor_2.run(RELEASE);
-        motor_3.run(RELEASE);
-        break;
-
-      case 'R':  // vpravo
+      case 'L':  // otáčanie doľava (ľavá zadná a predná pravá brzda)
+        motor_1.run(RELEASE);
+        motor_4.run(RELEASE);
         motor_2.run(FORWARD);
         motor_3.run(FORWARD);
-        motor_1.run(RELEASE);
-        motor_4.run(RELEASE);
         break;
 
-      case 'S':  // STOP motory
+      case 'R':  // otáčanie doprava (pravá zadná a predná ľavá brzda)
+        motor_2.run(RELEASE);
+        motor_3.run(RELEASE);
+        motor_1.run(FORWARD);
+        motor_4.run(FORWARD);
+        break;
+
+      case 'S':  // stop
         motor_1.run(RELEASE);
         motor_2.run(RELEASE);
         motor_3.run(RELEASE);
         motor_4.run(RELEASE);
         break;
 
-      case 'M':  // meranie START – iba debug, motory sa nespustia ani nezastavia
-        Serial.println("Received MEASURE_START (ignored by Arduino)");
+      case 'M':  // meranie start – ignorovať
+      case 'X':  // meranie stop – ignorovať
+        // nič s motorom
         break;
 
-      case 'X':  // meranie STOP – iba debug
-        Serial.println("Received MEASURE_STOP (ignored by Arduino)");
-        break;
-
-      default:   // čokoľvek iné (napr. nezrozumiteľné znaky)
-        Serial.print("Unknown cmd, ignoring: ");
-        Serial.println(cmd);
+      default:
+        // neznámy príkaz – ignorovať
         break;
     }
   }
 }
-

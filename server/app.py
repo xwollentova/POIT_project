@@ -26,13 +26,14 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 # --- Config.cfg načítanie ---
 config = ConfigParser.ConfigParser()
 config.read('config.cfg')
+myport = config.getint('mysqlDB', 'port')
 myhost = config.get('mysqlDB', 'host')
 myuser = config.get('mysqlDB', 'user')
 mypasswd = config.get('mysqlDB', 'passwd')
 mydb = config.get('mysqlDB', 'db')
 
 # --- NodeMCU ---
-NODEMCU_IP     = '192.168.88.7'
+NODEMCU_IP     = '192.168.88.5'
 NODEMCU_URL    = f'http://{NODEMCU_IP}/command'
 NODEMCU_SENSOR = f'http://{NODEMCU_IP}/sensor'
 ALLOWED = {'FORWARD','BACKWARD','LEFT','RIGHT','STOP','MEASURE_START','MEASURE_STOP'}
@@ -68,7 +69,14 @@ def health():
 @app.route('/record_json/<int:record_id>')
 def get_record_json(record_id):
     try:
-        conn = mariadb.connect(host=myhost, user=myuser, password=mypasswd, database=mydb)
+        conn = mariadb.connect(
+            host=myhost,
+            port=myport,
+            user=myuser,
+            password=mypasswd,
+            database=mydb
+        )
+
         cur = conn.cursor()
         cur.execute("SELECT id, start_time, end_time, temperatures, humidities FROM records_json WHERE id = ?", (record_id,))
         row = cur.fetchone()

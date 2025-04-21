@@ -14,6 +14,12 @@ void setup() {
   motor_2.setSpeed(255);
   motor_3.setSpeed(255);
   motor_4.setSpeed(255);
+  
+  // Stopni všetky motory po štarte
+  motor_1.run(RELEASE);
+  motor_2.run(RELEASE);
+  motor_3.run(RELEASE);
+  motor_4.run(RELEASE);
 }
 
 void loop() {

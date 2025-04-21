@@ -101,28 +101,31 @@ void setup() {
 
   delay(100);
   dht.begin();
+  IPAddress staticIP(192, 168, 88, 5);   // Statická IP, ktorú chceš
+  IPAddress gateway(192, 168, 88, 1);    // Tvoja brána = IP routera
+  IPAddress subnet(255, 255, 255, 0);    // Maska podsiete
 
-  // pripojenie Wi‑Fi
+  WiFi.config(staticIP, gateway, subnet);
+
+
+  // pripojenie Wi‑Fi - donekonečna, so stavmi
   Serial.printf("\nConnecting to Wi‑Fi \"%s\"\n", ssid);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  unsigned long start=millis();
-  while (WiFi.status()!=WL_CONNECTED && millis()-start<10000) {
-    Serial.print(".");
-    delay(500);
-  }
-  if (WiFi.status()==WL_CONNECTED) {
-    Serial.println("\nWi‑Fi connected!");
-    // TU vypíšeme IP
-    IPAddress ip = WiFi.localIP();
-    Serial.print("My IP address: ");
-    Serial.println(ip);
-  } else {
-    Serial.println("\nWi‑Fi connection failed!");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print("Connecting... Status: ");
+    Serial.println(wifiStatusToString(WiFi.status()));
   }
 
+  Serial.println("\nWi‑Fi connected!");
+  IPAddress ip = WiFi.localIP();
+  Serial.print("My IP address: ");
+  Serial.println(ip);
+
   // endpointy
-  server.on("/",        HTTP_GET,  handleRoot);
+  server.on("/",         HTTP_GET,  handleRoot);
   server.on("/sensor",   HTTP_GET,  handleSensor);
   server.on("/command",  HTTP_POST, handleCommand);
   server.begin();

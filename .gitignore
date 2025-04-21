@@ -2,6 +2,9 @@ venv
 # Prerequisites
 *.d
 
+# Priečinok so záznamami
+records/
+
 # Compiled Object files
 *.slo
 *.lo

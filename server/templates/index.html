@@ -77,6 +77,16 @@
       max-width: 600px;
       margin-top: 1rem;
     }
+    #btn-OPEN, #btn-CLOSE {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+    }
+
+    #connStatus {
+      font-weight: bold;
+      color: gray;
+    }
+
   </style>
 </head>
 <body>
@@ -148,6 +158,13 @@
       <div id="filePlotTemp" class="plot"></div>
       <div id="filePlotHum" class="plot"></div>
     </div>
+
+    <div style="margin-bottom: 1rem;">
+      <button id="btn-OPEN"> OPEN pripojenie</button>
+      <button id="btn-CLOSE" style="display:none;"> CLOSE pripojenie</button>
+      <span id="connStatus" style="margin-left:1rem; font-weight:bold; color:gray;">(nepripojené)</span>
+    </div>
+    
   </div>
 
   <!-- Skripty -->
@@ -156,10 +173,16 @@
       $("#tabs").tabs();
     });
 
+    let isOpen = false;
     const cmdSocket = io();
     function sendCmd(dir) {
+      if (!isOpen) {
+        alert("Najprv stlač tlačidlo OPEN!");
+        return;
+      }
       cmdSocket.emit('command', { direction: dir });
     }
+
     ['FORWARD','BACKWARD','LEFT','RIGHT'].forEach(dir => {
       const b = document.getElementById('btn-'+dir);
       b.addEventListener('mousedown',  ()=>sendCmd(dir));
@@ -167,7 +190,28 @@
       b.addEventListener('touchstart', e=>{ e.preventDefault(); sendCmd(dir); });
       b.addEventListener('touchend',   e=>{ e.preventDefault(); sendCmd('STOP'); });
     });
-    document.getElementById('btn-STOP').addEventListener('click', ()=>sendCmd('STOP'));
+    document.getElementById('btn-STOP').addEventListener('click', () => sendCmd('STOP'));
+    document.getElementById('btn-OPEN').addEventListener('click', () => {
+      isOpen = true;
+      document.getElementById('btn-OPEN').style.display = 'none';
+      document.getElementById('btn-CLOSE').style.display = '';
+      document.getElementById('connStatus').textContent = "(pripojené)";
+      document.getElementById('connStatus').style.color = 'green';
+      alert("Pripojenie otvorené.");
+    });
+
+    document.getElementById('btn-CLOSE').addEventListener('click', () => {
+      isOpen = false;
+      document.getElementById('btn-OPEN').style.display = '';
+      document.getElementById('btn-CLOSE').style.display = 'none';
+      document.getElementById('connStatus').textContent = "(nepripojené)";
+      document.getElementById('connStatus').style.color = 'gray';
+
+      // Stopni meranie ak beží
+      dhtSocket.emit('toggle_running');
+      alert("Pripojenie uzavreté. Komunikácia s NodeMCU zastavená.");
+    });
+
 
     const dhtSocket = io('/dht');
     const btnStart = document.getElementById('btn-START');
@@ -175,6 +219,7 @@
     const logEl    = document.getElementById('log');
     const maxPoints = 10;
     let tempX = [], tempY = [], humX = [], humY = [];
+    
 
     const gaugeTemp = new RadialGauge({
       renderTo: "gaugeTemp", width: 250, height: 250,
@@ -200,7 +245,14 @@
     Plotly.newPlot('plotHum', [{ x:[], y:[], mode:'lines+markers', name:'Vlhkosť' }],
       { title: 'Vlhkosť', xaxis:{title:'Čas'}, yaxis:{title:'%'} });
 
-    btnStart.addEventListener('click', () => dhtSocket.emit('toggle_running'));
+      btnStart.addEventListener('click', () => {
+        if (!isOpen) {
+          alert("Najprv stlač OPEN, aby si mohol začať merať.");
+          return;
+        }
+        dhtSocket.emit('toggle_running');
+      });
+
     btnExit .addEventListener('click', () => dhtSocket.emit('toggle_running'));
 
     dhtSocket.on('dht_status', msg => {
